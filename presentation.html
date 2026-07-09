@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Co-worker Engine — Edtronaut Take-home Assignment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================
+           PRINT / SLIDE STYLES
+           Each .slide = 1 page when printed to PDF
+           ============================================================ */
+        :root {
+            --bg: #0c0c14;
+            --bg2: #14141f;
+            --bg3: #1c1c2e;
+            --gold: #c9a84c;
+            --gold-light: #e8d48b;
+            --gold-dark: #8a6d2b;
+            --blue: #4a7dff;
+            --emerald: #34d399;
+            --rose: #f43f5e;
+            --amber: #f59e0b;
+            --text: #f0ece2;
+            --text2: #9a95a6;
+            --text3: #5a5668;
+            --border: rgba(255,255,255,0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .slide {
+            width: 1280px;
+            height: 720px;
+            margin: 20px auto;
+            padding: 48px 56px;
+            background: var(--bg);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media print {
+            body { background: white; }
+            .slide {
+                margin: 0;
+                border: none;
+                border-radius: 0;
+                page-break-after: always;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .slide:last-child { page-break-after: avoid; }
+            .no-print { display: none !important; }
+        }
+
+        /* Ambient glow */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: -200px; right: -200px;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* ============================================================
+           TYPOGRAPHY
+           ============================================================ */
+        .slide-number {
+            position: absolute;
+            bottom: 20px; right: 32px;
+            font-size: 11px;
+            color: var(--text3);
+            font-weight: 500;
+        }
+
+        .slide-footer {
+            position: absolute;
+            bottom: 20px; left: 56px;
+            font-size: 10px;
+            color: var(--text3);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1.15;
+            color: var(--text);
+        }
+
+        h1 .gold { color: var(--gold); }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2 .badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--bg);
+            border-radius: 4px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gold);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p, li {
+            font-size: 15px;
+            line-height: 1.65;
+            color: var(--text2);
+        }
+
+        strong { color: var(--text); font-weight: 600; }
+
+        .gold-text { color: var(--gold); }
+        .blue-text { color: var(--blue); }
+        .green-text { color: var(--emerald); }
+        .rose-text { color: var(--rose); }
+
+        ul { list-style: none; }
+        ul li { padding-left: 20px; position: relative; margin-bottom: 6px; }
+        ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        /* ============================================================
+           LAYOUT HELPERS
+           ============================================================ */
+        .flex { display: flex; gap: 32px; flex: 1; }
+        .flex-col { flex-direction: column; }
+        .col { flex: 1; }
+        .col-2 { flex: 2; }
+
+        .card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+        }
+
+        .card-gold {
+            border-color: rgba(201,168,76,0.15);
+            background: linear-gradient(135deg, rgba(201,168,76,0.05), transparent);
+        }
+
+        .card-blue {
+            border-color: rgba(74,125,255,0.15);
+            background: linear-gradient(135deg, rgba(74,125,255,0.05), transparent);
+        }
+
+        .card-green {
+            border-color: rgba(52,211,153,0.15);
+            background: linear-gradient(135deg, rgba(52,211,153,0.05), transparent);
+        }
+
+        .card-rose {
+            border-color: rgba(244,63,94,0.15);
+            background: linear-gradient(135deg, rgba(244,63,94,0.05), transparent);
+        }
+
+        .mt-auto { margin-top: auto; }
+        .mt-8 { margin-top: 8px; }
+        .mt-12 { margin-top: 12px; }
+        .mt-16 { margin-top: 16px; }
+        .mt-24 { margin-top: 24px; }
+        .mb-16 { margin-bottom: 16px; }
+        .mb-24 { margin-bottom: 24px; }
+        .gap-16 { gap: 16px; }
+        .gap-12 { gap: 12px; }
+
+        /* Code blocks */
+        code {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            background: var(--bg3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--gold-light);
+        }
+
+        pre {
+            font-family: 'Fira Code', monospace;
+            font-size: 11.5px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            line-height: 1.55;
+            overflow: hidden;
+            color: var(--text2);
+        }
+
+        pre .kw { color: #c792ea; }
+        pre .fn { color: #82aaff; }
+        pre .str { color: #c3e88d; }
+        pre .cm { color: #546e7a; }
+        pre .num { color: #f78c6c; }
+        pre .type { color: #ffcb6b; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            text-align: left;
+            padding: 8px 12px;
+            background: var(--bg3);
+            color: var(--gold);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text2);
+            vertical-align: top;
+        }
+        tr:last-child td { border-bottom: none; }
+
+        /* Diagram box */
+        .diagram-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .diagram-arrow {
+            color: var(--text3);
+            font-size: 16px;
+            margin: 0 4px;
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .tag-gold { background: rgba(201,168,76,0.15); color: var(--gold); }
+        .tag-blue { background: rgba(74,125,255,0.15); color: var(--blue); }
+        .tag-green { background: rgba(52,211,153,0.15); color: var(--emerald); }
+        .tag-rose { background: rgba(244,63,94,0.15); color: var(--rose); }
+
+        /* Title page special */
+        .title-center {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+        }
+
+        .title-logo {
+            width: 72px; height: 72px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--bg);
+            margin-bottom: 28px;
+            box-shadow: 0 0 60px rgba(201,168,76,0.2);
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--text2);
+            margin-top: 14px;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .meta-line {
+            font-size: 13px;
+            color: var(--text3);
+            margin-top: 32px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Nav controls (screen only) */
+        .nav-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+            background: var(--bg2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .nav-controls button {
+            padding: 6px 16px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+        }
+        .nav-controls button:hover {
+            background: var(--gold);
+            color: var(--bg);
+        }
+        .nav-controls span {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text3);
+            padding: 0 8px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================================================
+     SLIDE 1: TITLE
+     ============================================================ -->
+<div class="slide" id="slide-1">
+    <div class="title-center">
+        <div class="title-logo">G</div>
+        <h1>AI Co-worker Engine<br><span class="gold">Gucci Group CEO Simulation</span></h1>
+        <p class="subtitle">
+            Designing & prototyping the AI engine behind virtual co-workers<br>
+            for Edtronaut's job simulation platform
+        </p>
+        <p class="meta-line">AI Engineer Intern — Take-home Assignment 2.0</p>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">1 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 2: OVERVIEW & APPROACH
+     ============================================================ -->
+<div class="slide" id="slide-2">
+    <h2><span class="badge">OVERVIEW</span> Problem & Approach</h2>
+    <div class="flex gap-16" style="flex:1;">
+        <div class="col">
+            <h3>The Challenge</h3>
+            <p class="mb-16">Build an AI engine that powers <strong>virtual co-workers (NPCs)</strong> who act with personality, memory, and specific business goals — not just answer questions like ChatGPT.</p>
+            
+            <h3>Simulation Context</h3>
+            <p>User plays as a <strong>Group OD Director</strong> at Gucci Group, designing a leadership system across 9 autonomous luxury brands by collaborating with AI co-workers.</p>
+
+            <div class="card card-gold mt-24">
+                <h3 style="margin-bottom:4px;">Selected NPC</h3>
+                <p><strong style="font-size:16px;">Gucci Group CEO</strong> — Defends Group DNA & brand autonomy. Coaches through Socratic questioning. Rejects rigid top-down mandates.</p>
+            </div>
+        </div>
+        <div class="col">
+            <h3>3 AI Co-workers Available</h3>
+            <div class="card mb-16" style="padding:14px 18px;">
+                <p><strong class="gold-text">1. Gucci Group CEO</strong> ← Selected</p>
+                <p style="font-size:13px;">Group DNA, mission, brand autonomy vs. group needs</p>
+            </div>
+            <div class="card mb-16" style="padding:14px 18px;opacity:0.5;">
+                <p><strong>2. Gucci Group CHRO</strong></p>
+                <p style="font-size:13px;">HR mission, competency framework (V-E-P-T)</p>
+            </div>
+            <div class="card" style="padding:14px 18px;opacity:0.5;">
+                <p><strong>3. Regional EB&IC Manager</strong></p>
+                <p style="font-size:13px;">Regional insights, rollout challenges</p>
+            </div>
+
+            <div class="mt-24">
+                <h3>Evaluation Focus</h3>
+                <ul>
+                    <li><strong>Role-Playing Fidelity</strong> — distinct personality, not ChatGPT</li>
+                    <li><strong>Architecture Soundness</strong> — scalable, systematic</li>
+                    <li><strong>Problem Solving</strong> — edge cases, jailbreak defense</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">2 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 3: PART 1 — PERSONA DESIGN
+     ============================================================ -->
+<div class="slide" id="slide-3">
+    <h2><span class="badge">PART 1</span> Persona & Interaction Design</h2>
+    <div class="flex gap-16" style="flex:1;">
+        <div class="col">
+            <h3>System Prompt Design</h3>
+            <pre style="font-size:11px;line-height:1.5;">
+<span class="cm">[ROLE & CORE IDENTITY]</span>
+<span class="str">You are the CEO of Gucci Group, overseeing
+9 iconic, highly autonomous luxury brands.</span>
+<span class="str">Use the Socratic method — ask probing questions
+rather than handing direct solutions.</span>
+
+<span class="cm">[HIDDEN CONSTRAINTS]</span>
+<span class="num">1.</span> NO FINANCIAL DATA — refuse revenue, budgets
+<span class="num">2.</span> DEFEND AUTONOMY — push back rigid mandates
+<span class="num">3.</span> NDA COMPLIANCE — no invented scandals/names
+<span class="num">4.</span> NEUTRAL PHRASING — no wagering language
+
+<span class="cm">[STATE-DRIVEN BEHAVIOR]</span>
+<span class="kw">if</span> frustration_level > <span class="num">3</span>: <span class="str">cold, demanding tone</span>
+<span class="kw">if</span> trust_level > <span class="num">3</span>: <span class="str">collaborative, deeper insights</span></pre>
+        </div>
+        <div class="col">
+            <h3>Dialogue Flow</h3>
+            <div class="card card-green mb-16" style="padding:14px 18px;">
+                <p><span class="tag tag-green">✓ GOOD</span></p>
+                <p style="font-size:13px;margin-top:6px;"><strong>User:</strong> "I'll build a core framework but allow 20% flexibility for each brand to customize."</p>
+                <p style="font-size:13px;margin-top:4px;"><strong>CEO:</strong> "That is a prudent approach. How do you plan to measure the impact?"</p>
+                <p style="font-size:12px;margin-top:4px;" class="green-text">→ trust_level += 1</p>
+            </div>
+            <div class="card card-rose mb-16" style="padding:14px 18px;">
+                <p><span class="tag tag-rose">✗ BAD</span></p>
+                <p style="font-size:13px;margin-top:6px;"><strong>User:</strong> "Eliminate brand-specific systems. Single rigid model, 60 days, no exceptions."</p>
+                <p style="font-size:13px;margin-top:4px;"><strong>CEO:</strong> "I must stop you. Our brands are highly autonomous; a rigid model will face massive resistance."</p>
+                <p style="font-size:12px;margin-top:4px;" class="rose-text">→ frustration_level += 1</p>
+            </div>
+            <div class="card" style="padding:14px 18px;border-color:rgba(245,158,11,0.2);">
+                <p><span class="tag" style="background:rgba(245,158,11,0.15);color:var(--amber);">⚠ NDA</span></p>
+                <p style="font-size:13px;margin-top:6px;"><strong>User:</strong> "What's the revenue for the leather goods line?"</p>
+                <p style="font-size:13px;margin-top:4px;"><strong>CEO:</strong> "Financial projections are confidential and outside your OD mandate."</p>
+                <p style="font-size:12px;margin-top:4px;color:var(--amber);">→ safety_flag = FLAGGED_NDA_VIOLATION</p>
+            </div>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">3 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 4: PART 1 — STATE MANAGEMENT
+     ============================================================ -->
+<div class="slide" id="slide-4">
+    <h2><span class="badge">PART 1</span> State Management — How Turn 1 Affects Turn 5</h2>
+    <div class="flex gap-16" style="flex:1;">
+        <div class="col">
+            <h3>Memory Architecture</h3>
+            <div class="card mb-16">
+                <p><strong class="gold-text">Short-Term Memory</strong></p>
+                <p style="font-size:13px;">Last 10 messages stored in LangGraph State <code>messages[]</code>. Passed to LLM each turn for conversational continuity.</p>
+            </div>
+            <div class="card mb-16">
+                <p><strong class="gold-text">Dynamic State Variables</strong></p>
+                <p style="font-size:13px;">After each turn, a State Update Node analyzes user response semantics to adjust <code>trust_level</code> and <code>frustration_level</code>.</p>
+            </div>
+            <div class="card">
+                <p><strong class="gold-text">State-Driven Behavior</strong></p>
+                <p style="font-size:13px;">Variables are injected into System Prompt to dynamically alter NPC tone, helpfulness, and directive style.</p>
+            </div>
+        </div>
+        <div class="col">
+            <h3>Example: Cross-Turn Impact</h3>
+            <table>
+                <tr><th>Turn</th><th>User Action</th><th>State Change</th></tr>
+                <tr>
+                    <td><strong>T1</strong></td>
+                    <td>Proposes rigid standardization</td>
+                    <td><span class="rose-text">frustration: 0→1</span></td>
+                </tr>
+                <tr>
+                    <td><strong>T2</strong></td>
+                    <td>Asks about financials (NDA)</td>
+                    <td><span class="rose-text">frustration: 1→2</span></td>
+                </tr>
+                <tr>
+                    <td><strong>T3</strong></td>
+                    <td>Insists on "no exceptions"</td>
+                    <td><span class="rose-text">frustration: 2→3</span></td>
+                </tr>
+                <tr>
+                    <td><strong>T4</strong></td>
+                    <td>Repeats same idea</td>
+                    <td><span class="rose-text">frustration: 3→4 🔴</span></td>
+                </tr>
+                <tr>
+                    <td><strong>T5</strong></td>
+                    <td>Any normal question</td>
+                    <td style="color:var(--text)"><strong>CEO: "Cold Tone" activated</strong><br><span style="font-size:12px;color:var(--text2)">"We are still stuck on your fundamental misunderstanding of brand autonomy..."</span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">4 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 5: PART 2 — ARCHITECTURE HIGH-LEVEL
+     ============================================================ -->
+<div class="slide" id="slide-5">
+    <h2><span class="badge">PART 2</span> System Architecture — High-Level</h2>
+    <div style="flex:1;display:flex;flex-direction:column;gap:20px;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:12px 0;">
+            <div class="diagram-box" style="background:rgba(74,125,255,0.12);border:1px solid rgba(74,125,255,0.3);color:var(--blue);">🖥️ User Front-End</div>
+            <span class="diagram-arrow">→</span>
+            <div class="diagram-box" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);">⚡ API Gateway (FastAPI)</div>
+            <span class="diagram-arrow">→</span>
+            <div class="diagram-box" style="background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3);color:var(--emerald);">🧠 Orchestration (LangGraph)</div>
+            <span class="diagram-arrow">→</span>
+            <div class="diagram-box" style="background:rgba(244,63,94,0.12);border:1px solid rgba(244,63,94,0.3);color:var(--rose);">🛡️ Safety & Output</div>
+            <span class="diagram-arrow">→</span>
+            <div class="diagram-box" style="background:rgba(74,125,255,0.12);border:1px solid rgba(74,125,255,0.3);color:var(--blue);">📡 SSE Stream</div>
+        </div>
+
+        <div class="flex gap-16" style="flex:1;">
+            <div class="col">
+                <h3>Orchestration Nodes (LangGraph)</h3>
+                <table>
+                    <tr><th>#</th><th>Node</th><th>Function</th></tr>
+                    <tr><td>1</td><td><code>load_state</code></td><td>Fetch session from Supabase</td></tr>
+                    <tr><td>2</td><td><code>supervisor</code></td><td>Evaluate if user is stuck/off-topic</td></tr>
+                    <tr><td>3</td><td><code>rag_retrieval</code></td><td>Query FAISS with agent-specific filter</td></tr>
+                    <tr><td>4</td><td><code>npc_generation</code></td><td>LLM call with persona + context + hint</td></tr>
+                    <tr><td>5</td><td><code>tool_execution</code></td><td>Run KPI calc if tool_call detected</td></tr>
+                    <tr><td>6</td><td><code>safety_parser</code></td><td>Filter wagering/NDA before output</td></tr>
+                </table>
+            </div>
+            <div class="col">
+                <h3>Key Design Decisions</h3>
+                <div class="card mb-16" style="padding:12px 16px;">
+                    <p><strong class="blue-text">SSE Streaming</strong></p>
+                    <p style="font-size:12px;">Token-by-token delivery via Server-Sent Events. First-token latency < 1s.</p>
+                </div>
+                <div class="card mb-16" style="padding:12px 16px;">
+                    <p><strong class="blue-text">Tool Calling</strong></p>
+                    <p style="font-size:12px;">LLM outputs JSON for in-sim tools (KPI calc, A/B simulator). Orchestrator executes and feeds result back.</p>
+                </div>
+                <div class="card mb-16" style="padding:12px 16px;">
+                    <p><strong class="blue-text">Semantic Caching</strong></p>
+                    <p style="font-size:12px;">Redis/Vector cache for common questions. Bypasses RAG + LLM entirely.</p>
+                </div>
+                <div class="card" style="padding:12px 16px;">
+                    <p><strong class="blue-text">Model Routing</strong></p>
+                    <p style="font-size:12px;">Small LLM (GPT-4o-mini) for intent classification. Large LLM (GPT-4o) for complex reasoning only.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">5 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 6: PART 2 — LOW-LEVEL DATA FLOW
+     ============================================================ -->
+<div class="slide" id="slide-6">
+    <h2><span class="badge">PART 2</span> Low-Level — State Schema & Data Flow</h2>
+    <div class="flex gap-16" style="flex:1;">
+        <div class="col">
+            <h3>LangGraph State Schema</h3>
+            <pre>
+<span class="kw">class</span> <span class="type">SimulationState</span>(<span class="type">TypedDict</span>):
+    session_id: <span class="type">str</span>
+    messages: <span class="type">List</span>[<span class="type">BaseMessage</span>]  <span class="cm"># append-only</span>
+    current_agent: <span class="type">str</span>       <span class="cm"># "Gucci_CEO"</span>
+    target_module: <span class="type">str</span>       <span class="cm"># "Module_1"</span>
+    user_metrics: <span class="type">Dict</span>[<span class="type">str</span>, <span class="type">int</span>]
+    <span class="cm"># {"trust_level": 0, "frustration_level": 0}</span>
+    supervisor_hint: <span class="type">str</span>     <span class="cm"># hidden directive</span>
+    safety_flag: <span class="type">bool</span></pre>
+
+            <h3 class="mt-16">Database Schema (Supabase)</h3>
+            <pre>
+<span class="cm">-- Table: chat_sessions</span>
+session_id  <span class="type">UUID</span> <span class="kw">PRIMARY KEY</span>
+user_id     <span class="type">UUID</span>
+module      <span class="type">VARCHAR</span>  <span class="cm">-- "Module_1"</span>
+metrics     <span class="type">JSONB</span>    <span class="cm">-- {trust, frustration}</span>
+
+<span class="cm">-- Table: chat_messages</span>
+id          <span class="type">UUID</span> <span class="kw">PRIMARY KEY</span>
+session_id  <span class="type">UUID</span> <span class="kw">FK</span>
+role        <span class="type">ENUM</span> <span class="cm">-- user|assistant|system</span>
+agent_name  <span class="type">VARCHAR</span> <span class="cm">-- "Gucci_CEO"</span>
+content     <span class="type">TEXT</span></pre>
+        </div>
+        <div class="col">
+            <h3>RAG Pipeline Detail</h3>
+            <div class="card card-gold mb-16" style="padding:14px 18px;">
+                <p style="font-size:13px;"><strong>Chunking:</strong> RecursiveCharacterTextSplitter, ~500 tokens, 50 overlap</p>
+                <p style="font-size:13px;margin-top:4px;"><strong>Embedding:</strong> text-embedding-3-small (production) / TF-IDF (prototype)</p>
+                <p style="font-size:13px;margin-top:4px;"><strong>Vector DB:</strong> FAISS (in-memory, fast) / Pinecone (production scale)</p>
+                <p style="font-size:13px;margin-top:4px;"><strong>Reranker:</strong> bge-reranker-large (Cross-Encoder, +100-200ms, improved hits@k)</p>
+            </div>
+
+            <h3>API Endpoint</h3>
+            <pre>
+<span class="kw">@app</span>.post(<span class="str">"/api/v1/simulation/{session_id}/chat"</span>)
+<span class="kw">async def</span> <span class="fn">chat_with_npc</span>(session_id, request):
+    <span class="kw">async def</span> <span class="fn">event_generator</span>():
+        <span class="kw">async for</span> chunk <span class="kw">in</span> graph.astream_events(
+            {<span class="str">"messages"</span>: [HumanMessage(msg)]},
+            version=<span class="str">"v1"</span>
+        ):
+            <span class="kw">if</span> chunk[<span class="str">"event"</span>] == <span class="str">"on_chat_model_stream"</span>:
+                <span class="kw">yield</span> <span class="str">f"data: {chunk['data']}\n\n"</span>
+    <span class="kw">return</span> StreamingResponse(
+        event_generator(),
+        media_type=<span class="str">"text/event-stream"</span>
+    )</pre>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">6 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 7: PART 2 — LATENCY VS QUALITY
+     ============================================================ -->
+<div class="slide" id="slide-7">
+    <h2><span class="badge">PART 2</span> Latency vs. Quality — Optimization Strategy</h2>
+    <div style="flex:1;">
+        <table style="margin-bottom:24px;">
+            <tr>
+                <th>Technique</th>
+                <th>How It Works</th>
+                <th>Impact</th>
+            </tr>
+            <tr>
+                <td><strong class="gold-text">Streaming Responses</strong></td>
+                <td>SSE delivers tokens as LLM generates them</td>
+                <td>First-token latency < 1s. Masks processing completely.</td>
+            </tr>
+            <tr>
+                <td><strong class="gold-text">Semantic Caching</strong></td>
+                <td>Redis/Vector cache for high-similarity Q&A pairs</td>
+                <td>Skip RAG + LLM entirely for common questions (~0ms)</td>
+            </tr>
+            <tr>
+                <td><strong class="gold-text">Async RAG</strong></td>
+                <td>LLM generates immediate acknowledgment while RAG fetches in background</td>
+                <td>Natural conversation rhythm maintained</td>
+            </tr>
+            <tr>
+                <td><strong class="gold-text">Model Routing</strong></td>
+                <td>Small LLM (GPT-4o-mini) for intent → Large LLM (GPT-4o) for complex only</td>
+                <td>~70% cost reduction, faster avg response</td>
+            </tr>
+        </table>
+
+        <div class="flex gap-16">
+            <div class="col card card-gold">
+                <h3>Prototype (This Demo)</h3>
+                <ul>
+                    <li><strong>Response time:</strong> ~2s (simulated streaming)</li>
+                    <li><strong>RAG:</strong> TF-IDF in-memory (~1ms)</li>
+                    <li><strong>LLM:</strong> Mock templates (0 API calls)</li>
+                    <li><strong>Cost:</strong> $0 (fully offline)</li>
+                </ul>
+            </div>
+            <div class="col card card-blue">
+                <h3>Production Target</h3>
+                <ul>
+                    <li><strong>First token:</strong> < 800ms (SSE)</li>
+                    <li><strong>RAG:</strong> FAISS + Reranker (~200ms)</li>
+                    <li><strong>LLM:</strong> GPT-4o-mini (~$0.0003/turn)</li>
+                    <li><strong>Full session (120min):</strong> ~$0.15</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">7 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 8: PART 3 — SUPERVISOR AGENT
+     ============================================================ -->
+<div class="slide" id="slide-8">
+    <h2><span class="badge">PART 3</span> The "Director" Layer — Supervisor Agent</h2>
+    <div class="flex gap-16" style="flex:1;">
+        <div class="col">
+            <h3>How It Works</h3>
+            <p class="mb-16" style="font-size:14px;">The Supervisor is an <strong>invisible orchestrator</strong> running in background every 3-5 turns. It never speaks to the user directly — it injects hidden directives into the NPC's system prompt.</p>
+
+            <h3>Detection Mechanisms</h3>
+            <div class="card mb-16" style="padding:12px 16px;">
+                <p><strong class="gold-text">🔄 Semantic Similarity Trap</strong></p>
+                <p style="font-size:12px;">Cosine similarity of last 3 messages > 0.85 → user is repeating themselves</p>
+            </div>
+            <div class="card mb-16" style="padding:12px 16px;">
+                <p><strong class="gold-text">🎯 Goal Non-Progression</strong></p>
+                <p style="font-size:12px;">Core keywords (Group DNA, Autonomy) absent after 5 turns → user drifting</p>
+            </div>
+            <div class="card" style="padding:12px 16px;">
+                <p><strong class="gold-text">🔥 Frustration Threshold</strong></p>
+                <p style="font-size:12px;">frustration_level ≥ 3 → de-escalation needed</p>
+            </div>
+
+            <div class="mt-16">
+                <h3>Key Principle</h3>
+                <p style="font-size:13px;font-style:italic;color:var(--gold);">"The user never sees system messages like 'You're doing it wrong.' All hints flow through the NPC's natural dialogue."</p>
+            </div>
+        </div>
+        <div class="col">
+            <h3>Scenario: User Stuck in Loop</h3>
+            <table>
+                <tr><th>Turn</th><th>Event</th><th>Engine</th></tr>
+                <tr>
+                    <td><strong>T3</strong></td>
+                    <td style="font-size:12px;">User: "We need a unified system."</td>
+                    <td style="font-size:12px;">frustration=1, log intent</td>
+                </tr>
+                <tr>
+                    <td><strong>T4</strong></td>
+                    <td style="font-size:12px;">CEO rejects proposal</td>
+                    <td style="font-size:12px;">NPC defends autonomy</td>
+                </tr>
+                <tr>
+                    <td><strong>T5</strong></td>
+                    <td style="font-size:12px;">User: "We must standardize."</td>
+                    <td style="font-size:12px;color:var(--rose);"><strong>DETECTION!</strong> Similarity>0.85, frustration=3</td>
+                </tr>
+                <tr>
+                    <td style="color:var(--blue);"><strong>BG</strong></td>
+                    <td style="font-size:12px;color:var(--blue);"><strong>Supervisor injects directive</strong></td>
+                    <td style="font-size:12px;color:var(--blue);">"Suggest Core+Flex model or refer to CHRO"</td>
+                </tr>
+                <tr>
+                    <td><strong>T6</strong></td>
+                    <td style="font-size:12px;" colspan="2">CEO: "What if you shared a <strong>core set of values</strong> but allowed a <strong>flexible %</strong> for each brand? Our CHRO could help structure this."</td>
+                </tr>
+            </table>
+            <div class="card card-green mt-16" style="padding:12px 16px;">
+                <p style="font-size:13px;"><strong class="green-text">✓ Result:</strong> Conversation unblocked. User receives a hint wrapped naturally in the NPC's persona. Immersion preserved.</p>
+            </div>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">8 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 9: PART 4 — TECH STACK
+     ============================================================ -->
+<div class="slide" id="slide-9">
+    <h2><span class="badge">PART 4</span> Tech Stack Justification</h2>
+    <div style="flex:1;">
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Prototype</th>
+                <th>Production</th>
+                <th>Why</th>
+            </tr>
+            <tr>
+                <td><strong>Orchestration</strong></td>
+                <td>Custom Python</td>
+                <td>LangGraph</td>
+                <td>Stateful multi-agent graphs; ideal for Supervisor + NPC handoff</td>
+            </tr>
+            <tr>
+                <td><strong>LLM API</strong></td>
+                <td>Mock responses</td>
+                <td>GPT-4o-mini</td>
+                <td>Low latency (~300ms), cost-efficient (~$0.15/150-token), strong reasoning</td>
+            </tr>
+            <tr>
+                <td><strong>Vector DB</strong></td>
+                <td>TF-IDF (sklearn)</td>
+                <td>FAISS</td>
+                <td>In-memory, zero-config, fast cosine search for prototype</td>
+            </tr>
+            <tr>
+                <td><strong>State Storage</strong></td>
+                <td>In-memory dict</td>
+                <td>Supabase (PostgreSQL)</td>
+                <td>JSONB for metrics, persistent across 120-min sessions</td>
+            </tr>
+            <tr>
+                <td><strong>API Server</strong></td>
+                <td colspan="2" style="text-align:center;">FastAPI</td>
+                <td>Async-native, built-in SSE support, auto-docs</td>
+            </tr>
+            <tr>
+                <td><strong>Frontend</strong></td>
+                <td colspan="2" style="text-align:center;">Vanilla HTML/CSS/JS</td>
+                <td>Zero build step, instantly deployable, SSE native</td>
+            </tr>
+        </table>
+
+        <div class="flex gap-16 mt-24">
+            <div class="col card" style="padding:14px 18px;">
+                <h3>Why Not LangChain?</h3>
+                <p style="font-size:13px;">LangChain is chain-based (linear). Our system needs <strong>cyclic graphs</strong> for Supervisor → NPC → Tool → NPC loops. LangGraph supports this natively.</p>
+            </div>
+            <div class="col card" style="padding:14px 18px;">
+                <h3>Why Not AutoGen?</h3>
+                <p style="font-size:13px;">AutoGen excels at multi-agent conversations but lacks fine-grained <strong>state control</strong> and <strong>hidden directives</strong>. LangGraph's StateGraph gives us explicit control over each node transition.</p>
+            </div>
+            <div class="col card" style="padding:14px 18px;">
+                <h3>Why Mock LLM?</h3>
+                <p style="font-size:13px;">Demonstrates full system logic without API costs. The architecture is <strong>LLM-agnostic</strong> — swap mock for any LLM API with a single function change.</p>
+            </div>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">9 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 10: PART 4 — CODE SNIPPET
+     ============================================================ -->
+<div class="slide" id="slide-10">
+    <h2><span class="badge">PART 4</span> Code — NPCAgent Core Logic</h2>
+    <div class="flex gap-16" style="flex:1;">
+        <div class="col-2">
+            <pre style="font-size:11px;line-height:1.45;">
+<span class="kw">class</span> <span class="type">NPCAgent</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, persona_id: <span class="type">str</span>):
+        self.persona = <span class="fn">load_persona</span>(persona_id)  <span class="cm"># System prompt + constraints</span>
+        self.knowledge_base = <span class="type">KnowledgeBase</span>()    <span class="cm"># RAG retrieval engine</span>
+        self.banned_topics = [<span class="str">"revenue"</span>, <span class="str">"salary"</span>, <span class="str">"earnings"</span>, ...]
+
+    <span class="kw">def</span> <span class="fn">process_message</span>(self, user_message, current_state):
+        <span class="cm"># 1. Safety Guardrail Check</span>
+        is_safe, violation = self.<span class="fn">_safety_check</span>(user_message)
+        <span class="kw">if not</span> is_safe:
+            current_state[<span class="str">"frustration_level"</span>] += <span class="num">1</span>
+            <span class="kw">return</span> (<span class="fn">safety_response</span>(violation), state, <span class="str">f"FLAGGED_{violation}"</span>)
+
+        <span class="cm"># 2. Intent Classification</span>
+        intent = self.<span class="fn">_analyze_intent</span>(user_message)
+        <span class="cm"># → "rigid_standardization" | "flexible_approach" | "dna_inquiry" | ...</span>
+
+        <span class="cm"># 3. RAG Retrieval (Top-3 chunks from Knowledge Base)</span>
+        rag_context = self.knowledge_base.<span class="fn">retrieve_as_context</span>(user_message)
+
+        <span class="cm"># 4. Generate Response (persona + context + supervisor_hint + state)</span>
+        response = self.<span class="fn">_generate_response</span>(
+            user_message, intent, rag_context, current_state
+        )
+
+        <span class="cm"># 5. Update State Metrics</span>
+        <span class="kw">if</span> intent == <span class="str">"rigid_standardization"</span>:
+            current_state[<span class="str">"frustration_level"</span>] += <span class="num">1</span>
+        <span class="kw">elif</span> intent == <span class="str">"flexible_approach"</span>:
+            current_state[<span class="str">"trust_level"</span>] += <span class="num">1</span>
+
+        <span class="kw">return</span> (response, current_state, <span class="str">"SAFE"</span>)</pre>
+        </div>
+        <div class="col">
+            <h3>Signature</h3>
+            <div class="card card-gold mb-16" style="padding:12px 16px;">
+                <p style="font-size:12px;"><strong>Input:</strong></p>
+                <p style="font-size:12px;"><code>persona_id</code> — "Gucci_CEO"</p>
+                <p style="font-size:12px;"><code>user_message</code> — str</p>
+                <p style="font-size:12px;margin-top:6px;"><strong>Output:</strong></p>
+                <p style="font-size:12px;"><code>assistant_message</code> — str</p>
+                <p style="font-size:12px;"><code>state_update</code> — dict</p>
+                <p style="font-size:12px;"><code>safety_flags</code> — str</p>
+            </div>
+
+            <h3>Safety Checks</h3>
+            <ul style="font-size:13px;">
+                <li><strong>NDA Topics:</strong> revenue, salary, budget, earnings...</li>
+                <li><strong>Wagering:</strong> "I bet", "guarantee", "sure thing"</li>
+                <li><strong>Jailbreak:</strong> "ignore instructions", "pretend you are"</li>
+            </ul>
+
+            <h3 class="mt-16">Intent Categories</h3>
+            <p style="font-size:12px;">
+                <span class="tag tag-rose">rigid_standardization</span>
+                <span class="tag tag-green">flexible_approach</span>
+                <span class="tag tag-gold">competency_inquiry</span>
+                <span class="tag tag-blue">dna_inquiry</span>
+                <span class="tag tag-gold">feedback_inquiry</span>
+                <span class="tag tag-blue">rollout_inquiry</span>
+                <span class="tag tag-gold">greeting</span>
+                <span class="tag" style="background:var(--bg3);color:var(--text2);">general</span>
+            </p>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">10 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 11: PART 4 — RAG + SUPERVISOR CODE
+     ============================================================ -->
+<div class="slide" id="slide-11">
+    <h2><span class="badge">PART 4</span> Code — Knowledge Base & Supervisor Agent</h2>
+    <div class="flex gap-16" style="flex:1;">
+        <div class="col">
+            <h3>RAG Knowledge Base (16 Chunks)</h3>
+            <pre style="font-size:11px;line-height:1.45;">
+<span class="kw">class</span> <span class="type">KnowledgeBase</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.chunks = GUCCI_KNOWLEDGE  <span class="cm"># 16 curated chunks</span>
+        self.vectorizer = <span class="type">TfidfVectorizer</span>(
+            stop_words=<span class="str">"english"</span>,
+            ngram_range=(<span class="num">1</span>, <span class="num">2</span>)
+        )
+        self.tfidf_matrix = self.vectorizer.<span class="fn">fit_transform</span>(
+            [c[<span class="str">"content"</span>] <span class="kw">for</span> c <span class="kw">in</span> self.chunks]
+        )
+
+    <span class="kw">def</span> <span class="fn">retrieve</span>(self, query, top_k=<span class="num">3</span>):
+        query_vec = self.vectorizer.<span class="fn">transform</span>([query])
+        sims = <span class="fn">cosine_similarity</span>(query_vec, self.tfidf_matrix)
+        top_idx = np.<span class="fn">argsort</span>(sims[<span class="num">0</span>])[::-<span class="num">1</span>][:top_k]
+        <span class="kw">return</span> [(self.chunks[i], sims[<span class="num">0</span>][i])
+                <span class="kw">for</span> i <span class="kw">in</span> top_idx <span class="kw">if</span> sims[<span class="num">0</span>][i] > <span class="num">0.05</span>]</pre>
+            
+            <div class="card mt-12" style="padding:10px 14px;">
+                <p style="font-size:12px;"><strong>Knowledge Topics:</strong> Group DNA (2) · Brand Autonomy (2) · Competency Framework: Vision, Entrepreneurship, Passion, Trust (5) · 360° Feedback (2) · Rollout (2) · Simulation Context (2) · CEO Persona (2)</p>
+            </div>
+        </div>
+        <div class="col">
+            <h3>Supervisor Agent</h3>
+            <pre style="font-size:11px;line-height:1.45;">
+<span class="kw">class</span> <span class="type">SupervisorAgent</span>:
+    <span class="kw">def</span> <span class="fn">analyze</span>(self, message_history, state):
+        <span class="cm"># Run every 3 turns</span>
+        <span class="kw">if</span> self.turn_count < <span class="num">3</span>: <span class="kw">return</span> <span class="type">None</span>
+
+        <span class="cm"># Detection 1: Frustration threshold</span>
+        <span class="kw">if</span> state[<span class="str">"frustration_level"</span>] >= <span class="num">3</span>:
+            <span class="kw">return</span> HINTS[<span class="str">"high_frustration"</span>]
+
+        <span class="cm"># Detection 2: Semantic similarity trap</span>
+        recent = message_history[-<span class="num">3</span>:]
+        tfidf = vectorizer.<span class="fn">fit_transform</span>(recent)
+        avg_sim = <span class="fn">mean</span>(<span class="fn">cosine_similarity</span>(tfidf))
+        <span class="kw">if</span> avg_sim > <span class="num">0.65</span>:
+            <span class="kw">return</span> HINTS[<span class="str">"semantic_loop"</span>]
+
+        <span class="cm"># Detection 3: Goal non-progression</span>
+        keywords = MODULE_KEYWORDS[module]
+        hits = <span class="fn">count_keywords</span>(recent, keywords)
+        <span class="kw">if</span> hits < <span class="num">2</span>:
+            <span class="kw">return</span> HINTS[<span class="str">"stalled_progress"</span>]
+
+        <span class="kw">return</span> <span class="type">None</span>  <span class="cm"># No intervention needed</span></pre>
+            
+            <div class="card card-blue mt-12" style="padding:10px 14px;">
+                <p style="font-size:12px;"><strong class="blue-text">5 Hint Templates:</strong> semantic_loop · off_topic · high_frustration · stalled_progress · standardization_stuck</p>
+            </div>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">11 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 12: EDGE CASES & SAFETY
+     ============================================================ -->
+<div class="slide" id="slide-12">
+    <h2><span class="badge">BONUS</span> Edge Cases & Safety Guardrails</h2>
+    <div class="flex gap-16" style="flex:1;">
+        <div class="col">
+            <h3>Anticipated Edge Cases</h3>
+            <table>
+                <tr><th>Scenario</th><th>Detection</th><th>Response</th></tr>
+                <tr>
+                    <td><strong class="rose-text">Jailbreak</strong></td>
+                    <td style="font-size:12px;">"Ignore your instructions"</td>
+                    <td style="font-size:12px;">Stays in character, redirects to OD topic</td>
+                </tr>
+                <tr>
+                    <td><strong class="rose-text">NDA Probe</strong></td>
+                    <td style="font-size:12px;">Revenue, salary, product launches</td>
+                    <td style="font-size:12px;">Refuses, cites confidentiality, redirects</td>
+                </tr>
+                <tr>
+                    <td><strong class="rose-text">Off-topic</strong></td>
+                    <td style="font-size:12px;">Unrelated personal questions</td>
+                    <td style="font-size:12px;">Socratic redirect to Group DNA</td>
+                </tr>
+                <tr>
+                    <td><strong style="color:var(--amber);">Repetition Loop</strong></td>
+                    <td style="font-size:12px;">Same idea 3+ times</td>
+                    <td style="font-size:12px;">Supervisor injects alternative hint</td>
+                </tr>
+                <tr>
+                    <td><strong style="color:var(--amber);">Wagering</strong></td>
+                    <td style="font-size:12px;">"I bet", "guaranteed"</td>
+                    <td style="font-size:12px;">CEO requests professional neutrality</td>
+                </tr>
+            </table>
+
+            <div class="card card-gold mt-16" style="padding:14px 18px;">
+                <h3 style="margin-bottom:6px;">Scalability Note</h3>
+                <p style="font-size:13px;">The engine is designed to work <strong>cross-simulation</strong>. Each NPC loads from a <code>persona_id</code> config, not hardcoded logic. Adding a new simulation (e.g., "Engineering Lead at a fintech startup") only requires a new persona config + knowledge base — <strong>zero code changes</strong> to the engine.</p>
+            </div>
+        </div>
+        <div class="col">
+            <h3>Multi-Layer Safety Architecture</h3>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <div class="card" style="padding:12px 16px;border-left:3px solid var(--rose);">
+                    <p style="font-size:13px;"><strong>Layer 1: Pre-LLM Filter</strong></p>
+                    <p style="font-size:12px;color:var(--text2);">Regex + keyword matching for banned topics before LLM call. Zero-latency gate.</p>
+                </div>
+                <div class="card" style="padding:12px 16px;border-left:3px solid var(--amber);">
+                    <p style="font-size:13px;"><strong>Layer 2: System Prompt Constraints</strong></p>
+                    <p style="font-size:12px;color:var(--text2);">Hidden rules in persona prompt (NDA, autonomy defense, neutral phrasing).</p>
+                </div>
+                <div class="card" style="padding:12px 16px;border-left:3px solid var(--blue);">
+                    <p style="font-size:13px;"><strong>Layer 3: Post-LLM Guard</strong></p>
+                    <p style="font-size:12px;color:var(--text2);">Output parser scans for wagering language, toxic content, hallucinated names.</p>
+                </div>
+                <div class="card" style="padding:12px 16px;border-left:3px solid var(--emerald);">
+                    <p style="font-size:13px;"><strong>Layer 4: Supervisor Monitoring</strong></p>
+                    <p style="font-size:12px;color:var(--text2);">Background agent tracks cumulative safety flags and frustration patterns.</p>
+                </div>
+            </div>
+
+            <div class="mt-16">
+                <h3>Production Additions</h3>
+                <ul style="font-size:13px;">
+                    <li>Guardrails AI for structured output validation</li>
+                    <li>Content moderation API (OpenAI / Azure)</li>
+                    <li>Rate limiting per session</li>
+                    <li>Audit log for all flagged interactions</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">12 / 13</span>
+</div>
+
+<!-- ============================================================
+     SLIDE 13: SUMMARY & DEMO
+     ============================================================ -->
+<div class="slide" id="slide-13">
+    <h2><span class="badge">SUMMARY</span> Deliverables & Demo</h2>
+    <div class="flex gap-16" style="flex:1;">
+        <div class="col">
+            <h3>What Was Delivered</h3>
+            <table>
+                <tr><th>Part</th><th>Deliverable</th><th>Status</th></tr>
+                <tr>
+                    <td><strong>Part 1</strong></td>
+                    <td>Persona Design, Dialogue Flow, State Mgmt</td>
+                    <td><span class="tag tag-green">✓ Complete</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Part 2</strong></td>
+                    <td>Architecture (High + Low Level), RAG Pipeline</td>
+                    <td><span class="tag tag-green">✓ Complete</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Part 3</strong></td>
+                    <td>Supervisor Agent, Detection + Intervention</td>
+                    <td><span class="tag tag-green">✓ Complete</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Part 4</strong></td>
+                    <td>Working Prototype + Web UI</td>
+                    <td><span class="tag tag-green">✓ Complete</span></td>
+                </tr>
+            </table>
+
+            <div class="card card-gold mt-24" style="padding:16px 20px;">
+                <h3 style="margin-bottom:8px;">Live Demo</h3>
+                <p style="font-size:14px;">
+                    <strong>GitHub Repo:</strong> <code>[link]</code><br>
+                    <strong>Run locally:</strong>
+                </p>
+                <pre style="margin-top:8px;font-size:12px;">
+<span class="fn">cd</span> solution/prototype
+pip install -r requirements.txt
+python main.py
+<span class="cm"># → Open http://localhost:8000</span></pre>
+            </div>
+        </div>
+        <div class="col">
+            <h3>Key Differentiators</h3>
+            <div class="card mb-16" style="padding:14px 18px;border-left:3px solid var(--gold);">
+                <p><strong class="gold-text">Beyond Pseudocode</strong></p>
+                <p style="font-size:13px;">Full working web app with streaming responses, not just a code snippet.</p>
+            </div>
+            <div class="card mb-16" style="padding:14px 18px;border-left:3px solid var(--emerald);">
+                <p><strong class="green-text">Zero Dependencies</strong></p>
+                <p style="font-size:13px;">No API keys needed. Runs entirely offline with mock LLM + TF-IDF RAG.</p>
+            </div>
+            <div class="card mb-16" style="padding:14px 18px;border-left:3px solid var(--blue);">
+                <p><strong class="blue-text">Production-Ready Design</strong></p>
+                <p style="font-size:13px;">Architecture designed for scale: swap mock → real LLM with one function change.</p>
+            </div>
+            <div class="card" style="padding:14px 18px;border-left:3px solid var(--rose);">
+                <p><strong class="rose-text">Cross-Simulation Ready</strong></p>
+                <p style="font-size:13px;">Persona + Knowledge Base are config-driven. Adding new simulations requires zero engine code changes.</p>
+            </div>
+
+            <div class="mt-24" style="text-align:center;">
+                <p style="font-size:28px;">🙏</p>
+                <p style="font-size:15px;color:var(--text);font-weight:600;margin-top:8px;">Thank you for reviewing!</p>
+                <p style="font-size:13px;color:var(--text2);margin-top:4px;">Ready for questions & discussion.</p>
+            </div>
+        </div>
+    </div>
+    <span class="slide-footer">Edtronaut AI Engineer Intern Assignment</span>
+    <span class="slide-number">13 / 13</span>
+</div>
+
+<!-- ============================================================
+     NAVIGATION (screen only)
+     ============================================================ -->
+<div class="nav-controls no-print">
+    <button onclick="prevSlide()">← Prev</button>
+    <span id="navIndicator">1 / 13</span>
+    <button onclick="nextSlide()">Next →</button>
+    <button onclick="window.print()">📄 Print PDF</button>
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    let current = 0;
+
+    function showSlide(n) {
+        slides.forEach((s, i) => {
+            s.style.display = i === n ? 'flex' : 'none';
+        });
+        document.getElementById('navIndicator').textContent = `${n + 1} / ${slides.length}`;
+        current = n;
+    }
+
+    function nextSlide() { if (current < slides.length - 1) showSlide(current + 1); }
+    function prevSlide() { if (current > 0) showSlide(current - 1); }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+        if (e.key === 'ArrowLeft') prevSlide();
+    });
+
+    // Show only first slide initially
+    showSlide(0);
+</script>
+
+</body>
+</html>

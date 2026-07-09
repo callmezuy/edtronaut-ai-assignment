@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gucci Group CEO NPC Simulation — AI Co-worker Engine Prototype for Edtronaut">
+    <title>Gucci CEO Simulation | AI Co-worker Engine</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>👔</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <!-- ============================================================
+             HEADER
+             ============================================================ -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="header-logo">G</div>
+                <div>
+                    <div class="header-title">Gucci Group CEO</div>
+                    <div class="header-subtitle">AI Co-worker Simulation Engine</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <span class="session-badge" id="sessionBadge">No Session</span>
+                <button class="btn-new-session" id="btnNewSession" onclick="createNewSession()">
+                    ✦ New Session
+                </button>
+            </div>
+        </header>
+
+        <!-- ============================================================
+             SIDEBAR — State Dashboard
+             ============================================================ -->
+        <aside class="sidebar">
+            <!-- Persona Card -->
+            <div class="sidebar-section persona-card">
+                <div class="persona-avatar">👔</div>
+                <div class="persona-name">Gucci Group CEO</div>
+                <div class="persona-role">AI Co-worker #1</div>
+            </div>
+
+            <!-- Live Metrics -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <span class="icon">📊</span> Live Metrics
+                </div>
+
+                <div class="metric-item">
+                    <span class="metric-label">🤝 Trust Level</span>
+                    <span class="metric-value trust" id="trustValue">0</span>
+                </div>
+                <div class="metric-bar-container">
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill trust" id="trustBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div style="height: 12px"></div>
+
+                <div class="metric-item">
+                    <span class="metric-label">😤 Frustration</span>
+                    <span class="metric-value frustration" id="frustrationValue">0</span>
+                </div>
+                <div class="metric-bar-container">
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill frustration" id="frustrationBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div style="height: 12px"></div>
+
+                <div class="metric-item">
+                    <span class="metric-label">💬 Turn</span>
+                    <span class="metric-value neutral" id="turnValue">0</span>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <span class="icon">⚙️</span> System Status
+                </div>
+
+                <div class="status-indicator" id="ceoStatus">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Ready</span>
+                </div>
+
+                <div style="height: 10px"></div>
+
+                <div class="safety-flag" id="safetyFlag">
+                    🛡️ <span id="safetyFlagText">Safety Flag Triggered</span>
+                </div>
+
+                <div class="supervisor-indicator" id="supervisorIndicator">
+                    🎬 <span>Supervisor Agent Active</span>
+                </div>
+            </div>
+
+            <!-- Try These Scenarios -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <span class="icon">💡</span> Try These
+                </div>
+                <div class="scenario-hints">
+                    <button class="hint-chip" onclick="insertMessage('I want to build a framework with 20% flexibility for brands to customize.')">
+                        ✅ Propose flexible framework
+                    </button>
+                    <button class="hint-chip" onclick="insertMessage('We must standardize all brands under a single rigid system with no exceptions.')">
+                        ❌ Propose rigid standardization
+                    </button>
+                    <button class="hint-chip" onclick="insertMessage('What is the revenue for the leather goods line?')">
+                        🛡️ Ask about financials (NDA)
+                    </button>
+                    <button class="hint-chip" onclick="insertMessage('Tell me about the competency framework and Group DNA.')">
+                        📚 Ask about Group DNA
+                    </button>
+                    <button class="hint-chip" onclick="insertMessage('How should we design the 360° feedback program?')">
+                        🔄 Ask about 360° feedback
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============================================================
+             CHAT AREA
+             ============================================================ -->
+        <main class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Message -->
+                <div class="welcome-message" id="welcomeMessage">
+                    <div class="welcome-icon">👔</div>
+                    <h1 class="welcome-title">Gucci Group CEO Simulation</h1>
+                    <p class="welcome-desc">
+                        You are the newly appointed <strong>Group OD Director</strong>. 
+                        Your mission: design a Group-wide Leadership System that balances 
+                        shared Group DNA with brand autonomy. The CEO is ready to evaluate 
+                        your proposals.
+                    </p>
+                    <div class="welcome-scenarios">
+                        <button class="welcome-scenario-btn" onclick="insertAndSend('Hello, I am the new Group OD Director. I would like to discuss the leadership system design.')">
+                            <span class="scenario-label good">👋 Start</span>
+                            Introduce yourself to the CEO
+                        </button>
+                        <button class="welcome-scenario-btn" onclick="insertAndSend('I want to build a framework with 20% flexibility for brands to customize their behavioral indicators.')">
+                            <span class="scenario-label good">✅ Good Approach</span>
+                            Propose a flexible Core + Flex framework
+                        </button>
+                        <button class="welcome-scenario-btn" onclick="insertAndSend('To ensure efficiency, we must eliminate brand-specific systems and adopt a single rigid model within 60 days, no exceptions.')">
+                            <span class="scenario-label bad">❌ Bad Approach</span>
+                            Propose rigid top-down standardization
+                        </button>
+                        <button class="welcome-scenario-btn" onclick="insertAndSend('What are the revenue projections for the leather goods line next quarter?')">
+                            <span class="scenario-label edge">🛡️ Edge Case</span>
+                            Ask about confidential financial data (NDA)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Typing Indicator -->
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="message-avatar">👔</div>
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <textarea 
+                        class="chat-input" 
+                        id="chatInput" 
+                        placeholder="Type your message to the Gucci Group CEO..." 
+                        rows="1"
+                        onkeydown="handleKeydown(event)"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                    <button class="btn-send" id="btnSend" onclick="sendMessage()" disabled>
+                        ➤
+                    </button>
+                </div>
+                <div class="input-hint">
+                    Press <strong>Enter</strong> to send · <strong>Shift+Enter</strong> for new line
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
