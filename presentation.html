@@ -51,18 +51,30 @@
         }
 
         @media print {
-            body { background: white; }
+            body { background: #0c0c14; margin: 0; }
+            /* Force ALL slides visible — overrides JS display:none */
             .slide {
-                margin: 0;
-                border: none;
-                border-radius: 0;
-                page-break-after: always;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                display: flex !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                margin: 0 !important;
+                border: none !important;
+                border-radius: 0 !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                position: relative !important;
+                overflow: hidden !important;
             }
-            .slide:last-child { page-break-after: avoid; }
+            .slide:last-child {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
             .no-print { display: none !important; }
         }
+        /* Screen: hide inactive slides via .hidden class (not inline style) */
+        .slide.hidden { display: none; }
 
         /* Ambient glow */
         .slide::before {
@@ -1108,7 +1120,7 @@ content     <span class="type">TEXT</span></pre>
             <div class="card card-gold mt-24" style="padding:16px 20px;">
                 <h3 style="margin-bottom:8px;">Live Demo</h3>
                 <p style="font-size:14px;">
-                    <strong>GitHub Repo:</strong> <code>[link]</code><br>
+                    <strong>GitHub Repo:</strong> <a href="https://github.com/callmezuy/edtronaut-ai-assignment" style="color:var(--blue); text-decoration:none;">github.com/callmezuy/edtronaut-ai-assignment</a><br>
                     <strong>Run locally:</strong>
                 </p>
                 <pre style="margin-top:8px;font-size:12px;">
@@ -1164,7 +1176,12 @@ python main.py
 
     function showSlide(n) {
         slides.forEach((s, i) => {
-            s.style.display = i === n ? 'flex' : 'none';
+            // Use class instead of inline style so @media print can override
+            if (i === n) {
+                s.classList.remove('hidden');
+            } else {
+                s.classList.add('hidden');
+            }
         });
         document.getElementById('navIndicator').textContent = `${n + 1} / ${slides.length}`;
         current = n;
